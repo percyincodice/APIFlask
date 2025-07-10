@@ -1,30 +1,21 @@
 from flask import jsonify
+from pymongo import MongoClient
+from bson import ObjectId
 import json
 import os
 import uuid
 
 class PersonDA:
+    client = MongoClient("mongodb://localhost:27017")
+    db = client["apibd"]
+    collectionPersona = db["personas"]
 
     @staticmethod
     def createPerson(body):
         try:
-            if os.path.exists("database_temp.json"):
-                with open("database_temp.json", "r", encoding="utf-8") as fh:
-                    try:
-                        data = json.load(fh)
-                    except Exception as e1:
-                        data = []
-            else:
-                data = []
+            result = PersonDA.collectionPersona.insert_one(body)
 
-
-            body["id"] = str(uuid.uuid4())
-            data.append(body)
-
-            with open("database_temp.json", "w", encoding="utf-8") as fh:
-                json.dump(data, fh, indent=2)
-
-            return jsonify({"message": "Person created!!!!!!", "id": body["id"]}), 201
+            return jsonify({"message": "Person created!!!!!!", "id": str(result.inserted_id)}), 201
 
         except Exception as e:
             print("Error:", e)
@@ -33,14 +24,10 @@ class PersonDA:
     @staticmethod
     def listPerson():
         try:
-            if os.path.exists("database_temp.json"):
-                with open("database_temp.json", "r", encoding="utf-8") as fh:
-                    try:
-                        data = json.load(fh)
-                    except Exception as e1:
-                        data = []
-            else:
-                data = []       
+            data = list(PersonDA.collectionPersona.find())
+           
+            for person in data:
+                person["_id"] = str(person["_id"])                
 
             return jsonify(data), 200
 
@@ -52,19 +39,10 @@ class PersonDA:
     @staticmethod
     def getPersonById(person_id):
         try:
-            if os.path.exists("database_temp.json"):
-                with open("database_temp.json", "r", encoding="utf-8") as fh:
-                    try:
-                        data = json.load(fh)
-                    except Exception as e1:
-                        data = []
-            else:
-                data = [] 
-
-
-            person = next((p for p in data if p.get("id") == person_id), None)
+            person = PersonDA.collectionPersona.find_one({"_id": ObjectId(person_id)})
 
             if person:
+                person["_id"] = str(person["_id"])   
                 return jsonify(person), 200
             else:
                 return jsonify({"message": "Person not found."}), 404
@@ -78,31 +56,15 @@ class PersonDA:
     @staticmethod
     def updatePersonById(person_id, body):
         try:
-            if os.path.exists("database_temp.json"):
-                with open("database_temp.json", "r", encoding="utf-8") as fh:
-                    try:
-                        data = json.load(fh)
-                    except Exception as e1:
-                        data = []
-            else:
-                return jsonify({"message": "Person not found."}), 404
-
-            person_found = False
-
-            for index, person in enumerate(data):
-                if person.get("id") == person_id:
-                    body["id"] = person_id
-                    data[index] = body
-                    person_found = True
-                    break
-
-            if not person_found:
-                return jsonify({"message": "Person not found."}), 404
-
+            result = PersonDA.collectionPersona.update_one(
+                {"_id": ObjectId(person_id)},
+                {"$set": body}
+            )
             
-            with open("database_temp.json", "w", encoding="utf-8") as fh:
-                json.dump(data, fh, indent=2)
-
+            if result.matched_count == 0:
+                return jsonify({"message": "Person not found."}), 400
+            
+            
             return jsonify({"message": "Person updated."}), 200
 
         except Exception as e:
