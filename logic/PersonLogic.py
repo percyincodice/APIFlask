@@ -54,3 +54,11 @@ class PersonLogic:
         except Exception as e:
             print("Error: ", e)
             return jsonify({"message": "Error update persona logic."}), 500
+        
+    @staticmethod
+    def deletePersonById(person_id):
+        try:
+            return PersonDA.deletePersonById(person_id)
+        except Exception as e:
+            print("Error: ", e)
+            return jsonify({"message": "Error delete person logic."}), 500

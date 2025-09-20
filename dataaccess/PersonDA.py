@@ -70,3 +70,21 @@ class PersonDA:
         except Exception as e:
             print("Error:", e)
             return jsonify({"message": "Error in update person."}), 500
+        
+
+    @staticmethod
+    def deletePersonById(person_id):
+        try:
+            result = PersonDA.collectionPersona.delete_one(
+                {"_id": ObjectId(person_id)}
+            )
+            
+            if result.deleted_count == 0:
+                return jsonify({"message": "Person not found."}), 400
+            
+            
+            return jsonify({"message": "Person deleted."}), 200
+
+        except Exception as e:
+            print("Error:", e)
+            return jsonify({"message": "Error in delete person."}), 500

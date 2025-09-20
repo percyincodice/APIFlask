@@ -42,3 +42,12 @@ def updatePersonById(person_id):
     except Exception as e:
         print("Error:", e) # cloudwatch aws
         return "Error.", 500
+    
+@PersonBp.route("/api/person/<string:person_id>", methods=["DELETE"])
+def deletePersonById(person_id):
+    try:       
+
+        return PersonLogic.deletePersonById(person_id)
+    except Exception as e:
+        print("Error:", e) # cloudwatch aws
+        return "Error delete person.", 500
